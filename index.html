@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Dodge the Blocks</title>
+    <style>
+        #gameCanvas {
+            background-image: url('fundo.jpg');
+            background-repeat: no-repeat;
+            background-size: cover;
+            width: 300px;
+            height: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+        .block {
+            background-image: url('asteroid.png');
+            background-repeat: no-repeat;
+            background-size: cover;
+            position: absolute;
+            width: 30px;
+            height: 30px;
+          
+        }
+        #player {
+            background-image: url('nave.png');
+            background-repeat: no-repeat;
+            background-size: cover;
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            bottom: 200px;
+        }
+        #contador {
+            font-size: 24px;
+            font-weight: bold;
+        color: #070707;
+    }
+    </style>
+</head>
+<body>
+    <h1>Dodge the Blocks</h1>
+    <p1 id = "contador">Contador : 0</p1>
+    <div id="gameCanvas">
+        <div id="player"></div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
