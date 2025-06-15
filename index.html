@@ -1,49 +1,112 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Dodge the Blocks</title>
-    <style>
-        #gameCanvas {
-            background-image: url('fundo.jpg');
-            background-repeat: no-repeat;
-            background-size: cover;
-            width: 300px;
-            height: 400px;
-            position: relative;
-            overflow: hidden;
-        }
-        .block {
-            background-image: url('asteroid.png');
-            background-repeat: no-repeat;
-            background-size: cover;
-            position: absolute;
-            width: 30px;
-            height: 30px;
-          
-        }
-        #player {
-            background-image: url('nave.png');
-            background-repeat: no-repeat;
-            background-size: cover;
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            bottom: 200px;
-        }
-        #contador {
-            font-size: 24px;
-            font-weight: bold;
-        color: #070707;
+  <meta charset="UTF-8">
+  <title>Rosa Romântica</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #ffdde1, #fbc2eb);
+      background-size: 400% 400%;
+      animation: fundoRomantico 10s ease infinite;
+      position: relative;
     }
-    </style>
+
+    @keyframes fundoRomantico {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    #rosa {
+      width: 400px;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .heart {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: red;
+      transform: rotate(45deg);
+      animation: explodir 3.5s ease-out forwards;
+      z-index: 1;
+      opacity: 0.29;
+    }
+
+    .heart::before,
+    .heart::after {
+      content: "";
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: inherit;
+      border-radius: 50%;
+    }
+
+    .heart::before {
+      top: -10px;
+      left: 0;
+    }
+
+    .heart::after {
+      top: 0;
+      left: -10px;
+    }
+
+    @keyframes explodir {
+      0% {
+        transform: translate(0, 0) scale(1) rotate(45deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(var(--x), var(--y)) scale(1.5) rotate(45deg);
+        opacity: 0;
+      }
+    }
+  </style>
 </head>
 <body>
-    <h1>Dodge the Blocks</h1>
-    <p1 id = "contador">Contador : 0</p1>
-    <div id="gameCanvas">
-        <div id="player"></div>
-    </div>
-    <script src="game.js"></script>
+
+<!-- 🌹 Imagem mais bonita da rosa -->
+<img id="rosa" src="https://sdmntpreastus2.oaiusercontent.com/files/00000000-c748-61f6-a278-557a23ccef7e/raw?se=2025-06-15T01%3A58%3A05Z&sp=r&sv=2024-08-04&sr=b&scid=336b04ac-cc41-59d8-89b2-bb1b031eb6d2&skoid=b0fd38cc-3d33-418f-920e-4798de4acdd1&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-06-14T22%3A13%3A14Z&ske=2025-06-15T22%3A13%3A14Z&sks=b&skv=2024-08-04&sig=756eR03nygD6y7qdyYaDP5EpFN1mqsQIx/Z6dn1KkDo%3D" alt="Rosa Bonita" />
+
+<script>
+  const rosa = document.getElementById('rosa');
+
+  rosa.addEventListener('click', (e) => {
+    const quantidade = 20;
+    for (let i = 0; i < quantidade; i++) {
+      const heart = document.createElement('div');
+      heart.classList.add('heart');
+
+      const x = e.clientX;
+      const y = e.clientY;
+
+      const angle = Math.random() * 2 * Math.PI;
+      const distance = 150 + Math.random() * 100;
+
+      const offsetX = Math.cos(angle) * distance;
+      const offsetY = Math.sin(angle) * distance;
+
+      heart.style.left = x + 'px';
+      heart.style.top = y + 'px';
+      heart.style.setProperty('--x', `${offsetX}px`);
+      heart.style.setProperty('--y', `${offsetY}px`);
+      heart.style.backgroundColor = ['#ff5e78', '#ff99ac', '#ffcad4'][Math.floor(Math.random() * 3)];
+
+      document.body.appendChild(heart);
+
+      setTimeout(() => heart.remove(), 2500);
+    }
+  });
+</script>
+
 </body>
 </html>
