@@ -2,111 +2,101 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Rosa Romântica</title>
+  <title>Bússola para Minha Casa</title>
   <style>
     body {
-      margin: 0;
+      background: radial-gradient(#fff0f5, #ffe6f0);
       height: 100vh;
-      overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
-      background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #ffdde1, #fbc2eb);
-      background-size: 400% 400%;
-      animation: fundoRomantico 10s ease infinite;
-      position: relative;
+      font-family: sans-serif;
+      flex-direction: column;
     }
 
-    @keyframes fundoRomantico {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    #rosa {
-      width: 800px;
-      cursor: pointer;
-      z-index: 2;
-    }
-
-    .heart {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background-color: red;
-      transform: rotate(45deg);
-      animation: explodir 2.5s ease-out forwards;
-      z-index: 1;
-      opacity: 0.29;
-    }
-
-    .heart::before,
-    .heart::after {
-      content: "";
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background-color: inherit;
+    .compass {
+      width: 200px;
+      height: 200px;
+      border: 10px solid #e60073;
       border-radius: 50%;
+      position: relative;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
     }
 
-    .heart::before {
-      top: -10px;
-      left: 0;
+    .needle {
+      width: 4px;
+      height: 90px;
+      background: red;
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform-origin: bottom center;
+      transform: rotate(0deg);
+      transition: transform 0.5s ease-out;
     }
 
-    .heart::after {
-      top: 0;
-      left: -10px;
-    }
-
-    @keyframes explodir {
-      0% {
-        transform: translate(0, 0) scale(1) rotate(45deg);
-        opacity: 1;
-      }
-      100% {
-        transform: translate(var(--x), var(--y)) scale(1.5) rotate(45deg);
-        opacity: 0;
-      }
+    h2 {
+      margin-top: 20px;
+      color: #e60073;
     }
   </style>
 </head>
 <body>
+  <div class="compass">
+    <div class="needle" id="needle"></div>
+  </div>
+  <h2>Essa bússola sempre aponta para minha casa 🏠</h2>
 
-<!-- 🌹 Imagem mais bonita da rosa em 800px -->
-<img id="rosa" src="rosa.png" alt="Rosa Bonita" />
+  <script>
+    // 🏠 Coordenadas da sua casa:
+    const homeLat = -23.55052;  // Substitua com sua latitude
+    const homeLon = -46.633308; // Substitua com sua longitude
 
-<script>
-  const rosa = document.getElementById('rosa');
-
-  rosa.addEventListener('click', (e) => {
-    const quantidade = 20;
-    for (let i = 0; i < quantidade; i++) {
-      const heart = document.createElement('div');
-      heart.classList.add('heart');
-
-      const x = e.clientX;
-      const y = e.clientY;
-
-      const angle = Math.random() * 2 * Math.PI;
-      const distance = 250 + Math.random() * 150;
-
-      const offsetX = Math.cos(angle) * distance;
-      const offsetY = Math.sin(angle) * distance;
-
-      heart.style.left = x + 'px';
-      heart.style.top = y + 'px';
-      heart.style.setProperty('--x', `${offsetX}px`);
-      heart.style.setProperty('--y', `${offsetY}px`);
-      heart.style.backgroundColor = ['#ff5e78', '#ff99ac', '#ffcad4'][Math.floor(Math.random() * 3)];
-
-      document.body.appendChild(heart);
-
-      setTimeout(() => heart.remove(), 2500);
+    function toRadians(deg) {
+      return deg * Math.PI / 180;
     }
-  });
-</script>
 
+    function toDegrees(rad) {
+      return rad * 180 / Math.PI;
+    }
+
+    function calculateBearing(lat1, lon1, lat2, lon2) {
+      const φ1 = toRadians(lat1);
+      const φ2 = toRadians(lat2);
+      const Δλ = toRadians(lon2 - lon1);
+
+      const y = Math.sin(Δλ) * Math.cos(φ2);
+      const x = Math.cos(φ1) * Math.sin(φ2) -
+                Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+      const θ = Math.atan2(y, x);
+      return (toDegrees(θ) + 360) % 360;
+    }
+
+    // 🧭 Detectar a direção do dispositivo (precisa de permissão no celular)
+    let deviceHeading = 0;
+
+    window.addEventListener('deviceorientationabsolute', (e) => {
+      if (e.alpha !== null) {
+        deviceHeading = e.alpha;
+      }
+    });
+
+    function updateCompass() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+
+          const bearingToHome = calculateBearing(lat, lon, homeLat, homeLon);
+          const angle = bearingToHome - deviceHeading;
+
+          const needle = document.getElementById('needle');
+          needle.style.transform = `rotate(${angle}deg)`;
+        });
+      }
+    }
+
+    setInterval(updateCompass, 1000); // Atualiza a cada 1 segundo
+  </script>
 </body>
 </html>
