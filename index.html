@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Bússola para Minha Casa</title>
+  <meta charset="UTF-8" />
+  <title>Bússola para asdasdasd asdasd</title>
   <style>
     body {
       background: radial-gradient(#fff0f5, #ffe6f0);
@@ -12,6 +12,8 @@
       align-items: center;
       font-family: sans-serif;
       flex-direction: column;
+      padding: 20px;
+      text-align: center;
     }
 
     .compass {
@@ -21,6 +23,7 @@
       border-radius: 50%;
       position: relative;
       box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
     }
 
     .needle {
@@ -35,9 +38,21 @@
       transition: transform 0.5s ease-out;
     }
 
-    h2 {
-      margin-top: 20px;
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      background: #e60073;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 3px 6px rgba(230, 0, 115, 0.5);
+    }
+
+    #status {
+      margin-top: 15px;
       color: #e60073;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -45,58 +60,101 @@
   <div class="compass">
     <div class="needle" id="needle"></div>
   </div>
-  <h2>Essa bússola sempre aponta para minha casa 🏠</h2>
 
-  <script>
-    // 🏠 Coordenadas da sua casa:
-    const homeLat = -23.55052;  // Substitua com sua latitude
-    const homeLon = -46.633308; // Substitua com sua longitude
+  <button id="btnRequestPermission">Ativar bússola</button>
+  <div id="status"></div>
 
-    function toRadians(deg) {
-      return deg * Math.PI / 180;
+<script>
+  // Coloque aqui a latitude e longitude da sua casa:
+  const homeLat = -23.55052;  // EXEMPLO
+  const homeLon = -46.633308; // EXEMPLO
+
+  function toRadians(deg) {
+    return deg * Math.PI / 180;
+  }
+
+  function toDegrees(rad) {
+    return rad * 180 / Math.PI;
+  }
+
+  function calculateBearing(lat1, lon1, lat2, lon2) {
+    const φ1 = toRadians(lat1);
+    const φ2 = toRadians(lat2);
+    const Δλ = toRadians(lon2 - lon1);
+
+    const y = Math.sin(Δλ) * Math.cos(φ2);
+    const x = Math.cos(φ1) * Math.sin(φ2) -
+              Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+    const θ = Math.atan2(y, x);
+    return (toDegrees(θ) + 360) % 360;
+  }
+
+  let deviceHeading = 0;
+  let currentLat = null;
+  let currentLon = null;
+
+  const needle = document.getElementById('needle');
+  const status = document.getElementById('status');
+  const btn = document.getElementById('btnRequestPermission');
+
+  function updateCompass() {
+    if (currentLat !== null && currentLon !== null) {
+      const bearingToHome = calculateBearing(currentLat, currentLon, homeLat, homeLon);
+      const angle = bearingToHome - deviceHeading;
+      needle.style.transform = `rotate(${angle}deg)`;
     }
+  }
 
-    function toDegrees(rad) {
-      return rad * 180 / Math.PI;
+  function handleOrientation(event) {
+    if (event.alpha !== null) {
+      // alpha é a direção que o dispositivo está apontando (0-360)
+      deviceHeading = event.alpha;
+      updateCompass();
     }
+  }
 
-    function calculateBearing(lat1, lon1, lat2, lon2) {
-      const φ1 = toRadians(lat1);
-      const φ2 = toRadians(lat2);
-      const Δλ = toRadians(lon2 - lon1);
-
-      const y = Math.sin(Δλ) * Math.cos(φ2);
-      const x = Math.cos(φ1) * Math.sin(φ2) -
-                Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-      const θ = Math.atan2(y, x);
-      return (toDegrees(θ) + 360) % 360;
+  function getLocation() {
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(position => {
+        currentLat = position.coords.latitude;
+        currentLon = position.coords.longitude;
+        updateCompass();
+      }, error => {
+        status.textContent = 'Erro ao obter localização.';
+      }, { enableHighAccuracy: true });
+    } else {
+      status.textContent = 'Geolocalização não suportada.';
     }
+  }
 
-    // 🧭 Detectar a direção do dispositivo (precisa de permissão no celular)
-    let deviceHeading = 0;
-
-    window.addEventListener('deviceorientationabsolute', (e) => {
-      if (e.alpha !== null) {
-        deviceHeading = e.alpha;
-      }
-    });
-
-    function updateCompass() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-
-          const bearingToHome = calculateBearing(lat, lon, homeLat, homeLon);
-          const angle = bearingToHome - deviceHeading;
-
-          const needle = document.getElementById('needle');
-          needle.style.transform = `rotate(${angle}deg)`;
-        });
-      }
+  function enableCompass() {
+    // iOS 13+ precisa dessa permissão explícita para sensores
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission()
+      .then(permissionState => {
+        if (permissionState === 'granted') {
+          window.addEventListener('deviceorientation', handleOrientation, true);
+          status.textContent = 'Bússola ativada! Mova seu celular.';
+          btn.style.display = 'none';
+          getLocation();
+        } else {
+          status.textContent = 'Permissão negada para acessar sensores.';
+        }
+      })
+      .catch(() => {
+        status.textContent = 'Erro ao solicitar permissão.';
+      });
+    } else {
+      // Navegadores que não precisam de permissão explícita
+      window.addEventListener('deviceorientation', handleOrientation, true);
+      status.textContent = 'Bússola ativada! Mova seu celular.';
+      btn.style.display = 'none';
+      getLocation();
     }
+  }
 
-    setInterval(updateCompass, 1000); // Atualiza a cada 1 segundo
-  </script>
+  btn.addEventListener('click', enableCompass);
+</script>
 </body>
 </html>
