@@ -6,18 +6,56 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap');
 
-    body {
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
       font-family: 'Quicksand', sans-serif;
       background: radial-gradient(circle, #fff0f5, #ffd6e6);
       height: 100vh;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      text-align: center;
-      color: #e60073;
+      position: relative;
+    }
+
+    /* Fundo animado de corações */
+    .hearts {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .heart {
+      position: absolute;
+      color: #ff4d88;
+      font-size: 24px;
+      animation: floatUp 10s linear infinite;
+      opacity: 0.6;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translateY(100vh) scale(0.5);
+        opacity: 0;
+      }
+      50% {
+        opacity: 0.8;
+      }
+      100% {
+        transform: translateY(-10vh) scale(1.2);
+        opacity: 0;
+      }
     }
 
     .compass-container {
@@ -28,6 +66,7 @@
       border-radius: 50%;
       border: 10px solid #e60073;
       box-shadow: 0 10px 30px rgba(230, 0, 115, 0.2);
+      z-index: 1;
     }
 
     .needle {
@@ -35,7 +74,7 @@
       width: 6px;
       height: 220px;
       background: red;
-      top: 55px;
+      top: 35px;
       left: 50%;
       transform: translateX(-50%) rotate(0deg);
       transform-origin: bottom center;
@@ -86,6 +125,7 @@
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(230, 0, 115, 0.3);
       transition: background 0.3s ease;
+      z-index: 1;
     }
 
     button:hover {
@@ -95,15 +135,19 @@
     #status {
       margin-top: 20px;
       font-weight: 600;
+      color: #e60073;
+      z-index: 1;
     }
   </style>
 </head>
 <body>
+  <div class="hearts" id="hearts"></div>
+
   <div class="compass-container">
     <div class="needle" id="needle"></div>
     <div class="center-dot"></div>
     <div class="cardinals">
-      <div class="north">N</div>
+      <div class="north">B</div>
       <div class="south">S</div>
       <div class="east">L</div>
       <div class="west">O</div>
@@ -113,93 +157,110 @@
   <button id="btnRequestPermission">Ativar bússola</button>
   <div id="status">Clique no botão para ativar a bússola 🧭</div>
 
-<script>
-  const homeLat = -23.55052;   // Sua latitude
-  const homeLon = -46.633308;  // Sua longitude
+  <script>
+    const homeLat = -23.55052;
+    const homeLon = -46.633308;
 
-  function toRadians(deg) {
-    return deg * Math.PI / 180;
-  }
-
-  function toDegrees(rad) {
-    return rad * 180 / Math.PI;
-  }
-
-  function calculateBearing(lat1, lon1, lat2, lon2) {
-    const φ1 = toRadians(lat1);
-    const φ2 = toRadians(lat2);
-    const Δλ = toRadians(lon2 - lon1);
-
-    const y = Math.sin(Δλ) * Math.cos(φ2);
-    const x = Math.cos(φ1) * Math.sin(φ2) -
-              Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-    const θ = Math.atan2(y, x);
-    return (toDegrees(θ) + 360) % 360;
-  }
-
-  let deviceHeading = 0;
-  let currentLat = null;
-  let currentLon = null;
-
-  const needle = document.getElementById('needle');
-  const status = document.getElementById('status');
-  const btn = document.getElementById('btnRequestPermission');
-
-  function updateCompass() {
-    if (currentLat !== null && currentLon !== null) {
-      const bearingToHome = calculateBearing(currentLat, currentLon, homeLat, homeLon);
-      const angle = bearingToHome - deviceHeading;
-      needle.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+    function toRadians(deg) {
+      return deg * Math.PI / 180;
     }
-  }
 
-  function handleOrientation(event) {
-    if (event.alpha !== null) {
-      deviceHeading = event.alpha;
-      updateCompass();
+    function toDegrees(rad) {
+      return rad * 180 / Math.PI;
     }
-  }
 
-  function getLocation() {
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(position => {
-        currentLat = position.coords.latitude;
-        currentLon = position.coords.longitude;
+    function calculateBearing(lat1, lon1, lat2, lon2) {
+      const φ1 = toRadians(lat1);
+      const φ2 = toRadians(lat2);
+      const Δλ = toRadians(lon2 - lon1);
+
+      const y = Math.sin(Δλ) * Math.cos(φ2);
+      const x = Math.cos(φ1) * Math.sin(φ2) -
+                Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+      const θ = Math.atan2(y, x);
+      return (toDegrees(θ) + 360) % 360;
+    }
+
+    let deviceHeading = 0;
+    let currentLat = null;
+    let currentLon = null;
+
+    const needle = document.getElementById('needle');
+    const status = document.getElementById('status');
+    const btn = document.getElementById('btnRequestPermission');
+
+    function updateCompass() {
+      if (currentLat !== null && currentLon !== null) {
+        const bearingToHome = calculateBearing(currentLat, currentLon, homeLat, homeLon);
+        const angle = bearingToHome - deviceHeading;
+        needle.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+      }
+    }
+
+    function handleOrientation(event) {
+      if (event.alpha !== null) {
+        deviceHeading = event.alpha;
         updateCompass();
-      }, error => {
-        status.textContent = 'Erro ao obter localização.';
-      }, { enableHighAccuracy: true });
-    } else {
-      status.textContent = 'Geolocalização não suportada.';
+      }
     }
-  }
 
-  function enableCompass() {
-    if (typeof DeviceOrientationEvent !== 'undefined' &&
-        typeof DeviceOrientationEvent.requestPermission === 'function') {
-      DeviceOrientationEvent.requestPermission()
-      .then(permissionState => {
-        if (permissionState === 'granted') {
-          window.addEventListener('deviceorientation', handleOrientation, true);
-          status.textContent = 'Bússola ativada! Mova seu celular.';
-          btn.style.display = 'none';
-          getLocation();
-        } else {
-          status.textContent = 'Permissão negada.';
-        }
-      })
-      .catch(() => {
-        status.textContent = 'Erro ao solicitar permissão.';
-      });
-    } else {
-      window.addEventListener('deviceorientation', handleOrientation, true);
-      status.textContent = 'Bússola ativada! Mova seu celular.';
-      btn.style.display = 'none';
-      getLocation();
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(position => {
+          currentLat = position.coords.latitude;
+          currentLon = position.coords.longitude;
+          updateCompass();
+        }, error => {
+          status.textContent = 'Erro ao obter localização.';
+        }, { enableHighAccuracy: true });
+      } else {
+        status.textContent = 'Geolocalização não suportada.';
+      }
     }
-  }
 
-  btn.addEventListener('click', enableCompass);
-</script>
+    function enableCompass() {
+      if (typeof DeviceOrientationEvent !== 'undefined' &&
+          typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+        .then(permissionState => {
+          if (permissionState === 'granted') {
+            window.addEventListener('deviceorientation', handleOrientation, true);
+            status.textContent = 'Bússola ativada! 💘';
+            btn.style.display = 'none';
+            getLocation();
+          } else {
+            status.textContent = 'Permissão negada.';
+          }
+        })
+        .catch(() => {
+          status.textContent = 'Erro ao solicitar permissão.';
+        });
+      } else {
+        window.addEventListener('deviceorientation', handleOrientation, true);
+        status.textContent = 'Bússola ativada! 💘';
+        btn.style.display = 'none';
+        getLocation();
+      }
+    }
+
+    btn.addEventListener('click', enableCompass);
+
+    // 🌸 Corações subindo
+    const hearts = document.getElementById("hearts");
+
+    function createHeart() {
+      const heart = document.createElement("div");
+      heart.classList.add("heart");
+      heart.style.left = Math.random() * 100 + "vw";
+      heart.style.animationDuration = 6 + Math.random() * 5 + "s";
+      heart.textContent = "💖";
+      hearts.appendChild(heart);
+      setTimeout(() => {
+        heart.remove();
+      }, 11000);
+    }
+
+    setInterval(createHeart, 500);
+  </script>
 </body>
 </html>
