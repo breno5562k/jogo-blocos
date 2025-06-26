@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bússola do Coração</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: radial-gradient(circle, #fff0f5, #ffd6e6);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Fundo animado de corações */
+    .hearts {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .heart {
+      position: absolute;
+      color: #ff4d88;
+      font-size: 24px;
+      animation: floatUp 10s linear;
+      opacity: 0.6;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translateY(100vh) scale(0.5);
+        opacity: 0;
+      }
+      50% {
+        opacity: 0.8;
+      }
+      100% {
+        transform: translateY(-10vh) scale(1.2);
+        opacity: 0;
+      }
+    }
+
+    .compass-container {
+      position: relative;
+      width: 550px;
+      height: 550px;
+      background: white;
+      border-radius: 50%;
+      border: 10px solid #e60073;
+      box-shadow: 0 10px 30px rgba(230, 0, 115, 0.2);
+      z-index: 1;
+    }
+
+    .needle {
+      position: absolute;
+      width: 6px;
+      height: 220px;
+      background: red;
+      top: 35px;
+      left: 50%;
+      transform: translateX(-50%) rotate(0deg);
+      transform-origin: bottom center;
+      transition: transform 0.5s ease;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+      border-radius: 3px;
+      border: 1px solid #800000;
+    }
+
+    .center-dot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #e60073;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      z-index: 2;
+    }
+
+    .cardinals {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      font-weight: bold;
+      font-size: 24px;
+      color: #e60073;
+      pointer-events: none;
+    }
+
+    .cardinals div {
+      position: absolute;
+    }
+
+    .north { top: 10px; left: 50%; transform: translateX(-50%); }
+    .south { bottom: 10px; left: 50%; transform: translateX(-50%); }
+    .east  { right: 10px; top: 50%; transform: translateY(-50%); }
+    .west  { left: 10px; top: 50%; transform: translateY(-50%); }
+
+    button {
+      margin-top: 30px;
+      padding: 12px 24px;
+      font-size: 16px;
+      background: #e60073;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(230, 0, 115, 0.3);
+      transition: background 0.3s ease;
+      z-index: 2;
+    }
+
+    button:hover {
+      background: #c90064;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-weight: 600;
+      color: #e60073;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="hearts" id="hearts"></div>
+
+  <div class="compass-container">
+    <div class="needle" id="needle"></div>
+    <div class="center-dot"></div>
+    <div class="cardinals">
+      <div class="north">N</div> <!-- troque para "B" se quiser personalizar -->
+      <div class="south">S</div>
+      <div class="east">L</div>
+      <div class="west">O</div>
+    </div>
+  </div>
+
+  <button id="btnRequestPermission">Ativar bússola</button>
+  <div id="status">Clique no botão para ativar a bússola 🧭</div>
+
+  <script>
+    const homeLat = -23.55052;     // sua latitude
+    const homeLon = -46.633308;    // sua longitude
+
+    function toRadians(deg) {
+      return deg * Math.PI / 180;
+    }
+
+    function toDegrees(rad) {
+      return rad * 180 / Math.PI;
+    }
+
+    function calculateBearing(lat1, lon1, lat2, lon2) {
+      const φ1 = toRadians(lat1);
+      const φ2 = toRadians(lat2);
+      const Δλ = toRadians(lon2 - lon1);
+
+      const y = Math.sin(Δλ) * Math.cos(φ2);
+      const x = Math.cos(φ1) * Math.sin(φ2) -
+                Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+      const θ = Math.atan2(y, x);
+      return (toDegrees(θ) + 360) % 360;
+    }
+
+    let deviceHeading = 0;
+    let currentLat = null;
+    let currentLon = null;
+
+    const needle = document.getElementById('needle');
+    const status = document.getElementById('status');
+    const btn = document.getElementById('btnRequestPermission');
+
+    function updateCompass() {
+      if (currentLat !== null && currentLon !== null) {
+        const bearingToHome = calculateBearing(currentLat, currentLon, homeLat, homeLon);
+        const angle = (bearingToHome - deviceHeading + 360) % 360;
+        needle.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+      }
+    }
+
+    function handleOrientation(event) {
+      if (event.alpha !== null) {
+        deviceHeading = event.alpha;
+        updateCompass();
+      }
+    }
+
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(position => {
+          currentLat = position.coords.latitude;
+          currentLon = position.coords.longitude;
+          updateCompass();
+        }, error => {
+          status.textContent = 'Erro ao obter localização.';
+        }, { enableHighAccuracy: true });
+      } else {
+        status.textContent = 'Geolocalização não suportada.';
+      }
+    }
+
+    function enableCompass() {
+      if (typeof DeviceOrientationEvent !== 'undefined' &&
+          typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+        .then(permissionState => {
+          if (permissionState === 'granted') {
+            window.addEventListener('deviceorientation', handleOrientation, true);
+            status.textContent = 'Bússola ativada! 💘';
+            btn.style.display = 'none';
+            getLocation();
+          } else {
+            status.textContent = 'Permissão negada.';
+          }
+        })
+        .catch(() => {
+          status.textContent = 'Erro ao solicitar permissão.';
+        });
+      } else {
+        window.addEventListener('deviceorientation', handleOrientation, true);
+        status.textContent = 'Bússola ativada! 💘';
+        btn.style.display = 'none';
+        getLocation();
+      }
+    }
+
+    btn.addEventListener('click', enableCompass);
+
+    // 💖 Corações subindo
+    const hearts = document.getElementById("hearts");
+
+    function createHeart() {
+      const heart = document.createElement("div");
+      heart.classList.add("heart");
+      heart.style.left = Math.random() * 100 + "vw";
+      heart.style.animationDuration = 6 + Math.random() * 5 + "s";
+      heart.textContent = "💖";
+      heart.addEventListener("animationend", () => heart.remove());
+      hearts.appendChild(heart);
+    }
+
+    setInterval(createHeart, 500);
+  </script>
+</body>
+</html>
