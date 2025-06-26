@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Bússola</title>
+  <title>Bússola do Coração</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap');
 
@@ -40,7 +40,7 @@
       position: absolute;
       color: #ff4d88;
       font-size: 24px;
-      animation: floatUp 10s linear infinite;
+      animation: floatUp 10s linear;
       opacity: 0.6;
     }
 
@@ -81,6 +81,7 @@
       transition: transform 0.5s ease;
       box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
       border-radius: 3px;
+      border: 1px solid #800000;
     }
 
     .center-dot {
@@ -111,8 +112,8 @@
 
     .north { top: 10px; left: 50%; transform: translateX(-50%); }
     .south { bottom: 10px; left: 50%; transform: translateX(-50%); }
-    .east { right: 10px; top: 50%; transform: translateY(-50%); }
-    .west { left: 10px; top: 50%; transform: translateY(-50%); }
+    .east  { right: 10px; top: 50%; transform: translateY(-50%); }
+    .west  { left: 10px; top: 50%; transform: translateY(-50%); }
 
     button {
       margin-top: 30px;
@@ -125,7 +126,7 @@
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(230, 0, 115, 0.3);
       transition: background 0.3s ease;
-      z-index: 1;
+      z-index: 2;
     }
 
     button:hover {
@@ -136,7 +137,7 @@
       margin-top: 20px;
       font-weight: 600;
       color: #e60073;
-      z-index: 1;
+      z-index: 2;
     }
   </style>
 </head>
@@ -147,7 +148,7 @@
     <div class="needle" id="needle"></div>
     <div class="center-dot"></div>
     <div class="cardinals">
-      <div class="north">B</div>
+      <div class="north">B</div> <!-- troque para "B" se quiser personalizar -->
       <div class="south">S</div>
       <div class="east">L</div>
       <div class="west">O</div>
@@ -158,8 +159,8 @@
   <div id="status">Clique no botão para ativar a bússola 🧭</div>
 
   <script>
-    const homeLat = -23.55052;
-    const homeLon = -46.633308;
+    const homeLat = -23.55052;     // sua latitude
+    const homeLon = -46.633308;    // sua longitude
 
     function toRadians(deg) {
       return deg * Math.PI / 180;
@@ -192,7 +193,7 @@
     function updateCompass() {
       if (currentLat !== null && currentLon !== null) {
         const bearingToHome = calculateBearing(currentLat, currentLon, homeLat, homeLon);
-        const angle = bearingToHome - deviceHeading;
+        const angle = (bearingToHome - deviceHeading + 360) % 360;
         needle.style.transform = `translateX(-50%) rotate(${angle}deg)`;
       }
     }
@@ -245,7 +246,7 @@
 
     btn.addEventListener('click', enableCompass);
 
-    // 🌸 Corações subindo
+    // 💖 Corações subindo
     const hearts = document.getElementById("hearts");
 
     function createHeart() {
@@ -254,10 +255,8 @@
       heart.style.left = Math.random() * 100 + "vw";
       heart.style.animationDuration = 6 + Math.random() * 5 + "s";
       heart.textContent = "💖";
+      heart.addEventListener("animationend", () => heart.remove());
       hearts.appendChild(heart);
-      setTimeout(() => {
-        heart.remove();
-      }, 11000);
     }
 
     setInterval(createHeart, 500);
